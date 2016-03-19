@@ -12,9 +12,9 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
 
 
 ### Options:
-      -debug                 : Must be first arg if you want to see debug info.
-      <input_pattern>        : Normal shell pattern. (only in unix shell, Not for DOS)
-      -in:"<input_pattern>"  : Explicit input pattern, used for DOS/*NIX (use quotes!)
+      -debug                 : Must be first option if you want to see debug info.
+      <input_pattern>        : Normal shell pattern. (only in *NIX / Mac terminal, Not for Windows CMD)
+      -in:"<input_pattern>"  : Explicit input pattern - use quotes.
                                Patterns can be very explicit eg:
                                To select files 000_* - 045_* use this: "0[0-3][0-9]_.* 04[0-5]_.*"
       -out:<output_pattern>  : Use # (sequence number) to build an output pattern.
@@ -59,7 +59,7 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
 
 ### Additional tips:
 1. The `-start` option only applies to the resulting file names, not the input names.<br>
-   The input file names are completly controlled by the input pattern so this may lead to unexpected behavior:
+   The input file names are completely controlled by the input pattern so this may lead to unexpected behavior:
 
    Given these files: 1.jpg, 2.jpg, 3.jpg
 
@@ -79,7 +79,7 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
          8.jpg will be renamed to 2.jpg
          9.jpg will be renamed to 3.jpg
 
-   The trick is to manually pad with zeroes before using j-renamer:
+   The trick is to manually pad with zeros before using j-renamer:
 
         08.jpg will be renamed to 1.jpg
         09.jpg will be renamed to 2.jpg
