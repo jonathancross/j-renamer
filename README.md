@@ -96,3 +96,9 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
    Result: 1-Ouch.jpg, 2-Ouch.jpg, 3-Ouch.jpg
 
    This is why you should rename / number all files with j-renamer **before** you start adding individual names one at a time.
+
+### History
+This script was first developed on Windows XP using archaic `cmd` shell commands.  It was later re-written in perl with many new features and bug fixes.
+
+The original version can be found here:
+https://sourceforge.net/projects/j-renamer/
