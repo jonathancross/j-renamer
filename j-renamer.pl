@@ -1,16 +1,13 @@
 #!/opt/local/bin/perl -w
 #
 # J-Renamer
-# Batch file renaming utility.  Allows renaming unlimited number of files, pre/
-# post fixing of the names, numbering files, collision avoidance, proper padding
-# of numbers and retains grouping of files with same name, but different
-# extensions.  Specifically recommended for use with digital photos where you
-# have many files like DSCN12345.JPG and DSCN12345.RAW and you just want to
-# give them sane names like 001_My-Vacation.jpg and 001_My-Vacation.raw
+# Batch file renaming utility.
+# Source code, issues and documentation can be found here:
+#  • https://github.com/jonathancross/j-renamer
 #
 # See j-renamer.pl --help for more info, examples and usage.
 #
-# Jonathan Cross
+# Jonathan Cross - jonathancross.com
 #
 use strict;
 my %renameList;
@@ -205,7 +202,11 @@ TIPS:
      '.$script_name.' -in:"*.jpg" -out:"#-Ouch"
    Result: 1-Ouch.jpg, 2-Ouch.jpg, 3-Ouch.jpg
 
-   Generally it is best to rename / number all files with j-renamer BEFORE you start adding individual names one at a time.
+4. Generally it is best to rename / number all files with j-renamer BEFORE you start adding individual names one at a time.
+
+SUPPORT:
+
+ • https://github.com/jonathancross/j-renamer
 
   ';
   exit;
