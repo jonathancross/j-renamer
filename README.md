@@ -87,7 +87,7 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
 
 2.  There is no `-end` parameter, the script just sequentially renames all files identified by the `-in` pattern.
     
-3. All files are renamed according to the output pattern, therefore existing file names will be destroyed.
+3. All files are renamed according to the output pattern, therefore **existing file names will be destroyed**.
 
    Given these files: dog.jpg, man.jpg, pizza.jpg
 
@@ -95,4 +95,4 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
 
    Result: 1-Ouch.jpg, 2-Ouch.jpg, 3-Ouch.jpg
 
-4. Generally it is best to rename / number all files with j-renamer **before** you start adding individual names one at a time.
+   This is why you should rename / number all files with j-renamer **before** you start adding individual names one at a time.
