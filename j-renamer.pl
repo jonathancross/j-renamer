@@ -143,11 +143,11 @@ USAGE: '.$script_name.' <input_pattern> <options>
 OPTIONS:
   -debug                 : Must be first option if you want to see debug info.
   <input_pattern>        : Normal shell pattern. (only in *NIX / Mac terminal, Not for Windows CMD)
-  -in:"<input_pattern>"  : Explicit input pattern, used for DOS/*NIX (use quotes!)
+  -in:"<input_pattern>"  : Explicit input pattern - use quotes.
                            Patterns can be very explicit eg:
                            To select files 000_* - 045_* use this: "0[0-3][0-9]_.* 04[0-5]_.*"
   -out:<output_pattern>  : Use # (sequence number) to build an output pattern.
-                           Defaults to "#_" - will prefix files with: 1_, 2_ 3_, etc..
+                           Defaults to "#_" - will prefix files with: 1_, 2_, 3_, etc..
                            Multiple "##" will force padding the number with zeros: 01_, 02_, 03_
   -start:<start_number>  : Begin sequencing output file names from an arbitrary number. Defaults to "1".
                            Can be combined with other options to just rename a particular set
