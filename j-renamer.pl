@@ -4,11 +4,11 @@
 # Batch file renaming utility.  Allows renaming unlimited number of files, pre/
 # post fixing of the names, numbering files, collision avoidance, proper padding
 # of numbers and retains grouping of files with same name, but different
-# extensions.  Specifically recomended for use with digital photos where you
+# extensions.  Specifically recommended for use with digital photos where you
 # have many files like DSCN12345.JPG and DSCN12345.RAW and you just want to
 # give them sane names like 001_My-Vacation.jpg and 001_My-Vacation.raw
 #
-# See ./j-renamer.pl --help for more info, examples and usage.
+# See j-renamer.pl --help for more info, examples and usage.
 #
 # Jonathan Cross
 #
@@ -141,31 +141,31 @@ sub printUsage {
     print '
 "J" Renamer!
 
-USAGE: '.$script_name.' <input_pattern>
+USAGE: '.$script_name.' <input_pattern> <options>
 
 OPTIONS:
-  -debug                 : Must be first arg if you want to see debug info.
-  <input_pattern>        : Normal shell pattern. (only in unix shell, Not for DOS)
+  -debug                 : Must be first option if you want to see debug info.
+  <input_pattern>        : Normal shell pattern. (only in *NIX / Mac terminal, Not for Windows CMD)
   -in:"<input_pattern>"  : Explicit input pattern, used for DOS/*NIX (use quotes!)
                            Patterns can be very explicit eg:
                            To select files 000_* - 045_* use this: "0[0-3][0-9]_.* 04[0-5]_.*"
   -out:<output_pattern>  : Use # (sequence number) to build an output pattern.
                            Defaults to "#_" - will prefix files with: 1_, 2_ 3_, etc..
-                           Note that multiple "##" can be used to pad the number: 01_, 02_ 03_
+                           Multiple "##" will force padding the number with zeros: 01_, 02_, 03_
   -start:<start_number>  : Begin sequencing output file names from an arbitrary number. Defaults to "1".
                            Can be combined with other options to just rename a particular set
-                           of files while keeping same order / numbering.  See NOTES below.
+                           of files while keeping original order / numbering. See ADVANCED USAGE below.
   -ext:<upper|lower>     : Make file extension upper or lower case.
                            By default will not change file extension.
 
 EXAMPLES:
-  '.$script_name.' *.*                         : rename all files, prefix sequentially.
+  '.$script_name.' *.*                         : Rename all files, prefix sequentially.
   '.$script_name.' -in:"*.jpg" -out:#_PIC      : 1_PIC.jpg, 2_PIC.jpg, 3_PIC.jpg ...
   '.$script_name.' *.JpG -ext:lower -start:3   : 3_.jpg, 4_.jpg, 5_.jpg ...
   '.$script_name.' *.jpg -out:"### Bob"        : "001 Bob.jpg", "002 Bob.jpg", "003 Bob.jpg" ...
   '.$script_name.' *.jpg -out:Foo_#            : Foo_1.jpg, Foo_2.jpg, F00_3.jpg ...
 
-ADVANCED:
+ADVANCED USAGE:
 1. Select just a few files and number / rename only those:
    Given 11 files: 01.txt, 02.txt, 03.txt, 04.txt, 05.txt, 06.txt, 07.txt, 08.txt, 09.txt, 10.txt, 11.txt.
    Rename files 6-11, adding the word Nice like so: "03_Nice", etc, but keep in same order:
@@ -179,9 +179,9 @@ ADVANCED:
      '.$script_name.' -in:"*.jpg *.orf" -out:"Pic_#"
    Result: Pic_1.jpg, Pic_1.raw, Pic_2.jpg, Pic_3.jpg, Pic_3.raw
 
-NOTES:
+TIPS:
 1. The -start parameter only applies to the resulting file names, not the input names.
-   The input file names are comppletly controlled by the input pattern so this may lead to unexpected behavior:
+   The input file names are completely controlled by the input pattern so this may lead to unexpected behavior:
    Given these files: 1.jpg, 2.jpg, 3.jpg
      '.$script_name.' -in:"*.jpg" -out:"#" -start:4
    Result: 4.jpg, 5.jpg, 6.jpg
@@ -193,14 +193,14 @@ NOTES:
      10.jpg will be renamed to 1.jpg
       8.jpg will be renamed to 2.jpg
       9.jpg will be renamed to 3.jpg
-   The trick is to pad 8 and 9 with zeroes before using j-renamer:
+   The trick is to pad 8 and 9 with zeros before using j-renamer:
      08.jpg will be renamed to 1.jpg
      09.jpg will be renamed to 2.jpg
      10.jpg will be renamed to 3.jpg
 
 2.  There is no "-end" parameter, the script just sequentially renames all files identified by the "-in" pattern.
 
-3. All files are renamed acording to the output pattern, therefore existing file names will be destroyed.
+3. All files are renamed according to the output pattern, therefore existing file names will be destroyed.
    Given these files: dog.jpg, man.jpg, pizza.jpg
      '.$script_name.' -in:"*.jpg" -out:"#-Ouch"
    Result: 1-Ouch.jpg, 2-Ouch.jpg, 3-Ouch.jpg
@@ -212,18 +212,18 @@ NOTES:
 }
 
 sub createRenameList {
-  my $curNumber = ($OPTS{'start_number'} - 1); # hmmm... better way to do this?
+  my $curNumber = ($OPTS{'start_number'} - 1); # Hmmm... better way to do this?
   my $curNumberPadded = $OPTS{'start_number'};
 
   # Used to prevent double-counting of files which are identical, except for their extension.
   my $uniqueFileNames = 0;
 
-  # Used to handle files with differnet extensions, but same name
+  # Used to handle files with different extensions, but same name
   my $prevFilePrefix = '';
-  # Make sure that $uniqueFileNameDigits doesn't double-count files with same name and differnet extentions.
+  # Make sure that $uniqueFileNameDigits doesn't double-count files with same name and different extensions.
   foreach my $curFileName (@dirList) {
     my ($curFilePrefix, $curFileExtension) = ($curFileName =~ /(.*)([.][^.]+)$/);
-    # This allows us to keep grouping of files with same name, but diff extensions
+    # This allows us to keep grouping of files with same name, but different extensions
     if ( ! ($curFilePrefix eq $prevFilePrefix)){
       $uniqueFileNames++;
     }
@@ -232,7 +232,7 @@ sub createRenameList {
   # Digits in the number of unique file names.
   my $uniqueFileNameDigits = length(int($uniqueFileNames));
 
-  # Padding escalation... user can pad more than is necessary via multiple hash
+  # Padding escalation... user can pad more than is necessary via multiple hash.
   if ($OPTS{'output_pattern_digits'} gt $uniqueFileNameDigits) {
     printDebug("+Escalating padding from: ${uniqueFileNameDigits} to $OPTS{'output_pattern_digits'} due to pattern.");
     $uniqueFileNameDigits = $OPTS{'output_pattern_digits'};
@@ -241,7 +241,7 @@ sub createRenameList {
   my $outputFileName;
   foreach my $curFileName (@dirList) {
     my ($curFilePrefix, $curFileExtension) = ($curFileName =~ /(.*)([.][^.]+)$/);
-    # This allows us to keep grouping of files with same name, but diff extensions
+    # This allows us to keep grouping of files with same name, but different extensions.
     if ( ! ($curFilePrefix eq $prevFilePrefix)){
       $curNumber++;
     }
@@ -286,7 +286,7 @@ sub manageFiles {
   if ($doRename eq 'y') {
     if ($STATE{'is_name_collision'}) {
       #CRUDE???
-      printDebug('Handeling collisions: ');
+      printDebug('Handling collisions: ');
       processFileList('collision_handeling');
     }
     processFileList('rename');
@@ -363,7 +363,7 @@ sub prompt {
    $_ = <STDIN>;         # get the input from STDIN (presumably the keyboard)
    chomp;
    if ("$defaultValue") {
-     return $_ ? $_ : $defaultValue;    # return $_ if it has a value
+     return $_ ? $_ : $defaultValue; # return $_ if it has a value
    } else {
      return $_;
    }
