@@ -197,12 +197,12 @@ TIPS:
 
 2.  There is no "-end" parameter, the script just sequentially renames all files identified by the "-in" pattern.
 
-3. All files are renamed according to the output pattern, therefore existing file names will be destroyed.
+3. All files are renamed according to the output pattern, therefore EXISTING FILE NAMES WILL BE DESTROYED.
    Given these files: dog.jpg, man.jpg, pizza.jpg
      '.$script_name.' -in:"*.jpg" -out:"#-Ouch"
    Result: 1-Ouch.jpg, 2-Ouch.jpg, 3-Ouch.jpg
 
-4. Generally it is best to rename / number all files with j-renamer BEFORE you start adding individual names one at a time.
+   This is why you should rename / number all files with j-renamer BEFORE you start adding individual names one at a time.
 
 SUPPORT:
 
