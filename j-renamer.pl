@@ -34,6 +34,7 @@ my %STATE = (
   rename_list_size    => 0,
   is_name_collision   => 0,
 );
+
 # START PROCESSING
 &parseArgs();
 &createRenameList();
