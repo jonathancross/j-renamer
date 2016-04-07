@@ -7,7 +7,7 @@
 #
 # See j-renamer.pl --help for more info, examples and usage.
 #
-# Jonathan Cross - jonathancross.com
+# Jonathan Cross https://jonathancross.com
 #
 use strict;
 my %renameList;
@@ -43,18 +43,18 @@ exit;
 sub parseArgs () {
   my $i = 0;
   for my $A (@ARGV) {
-    if ($A =~ /^-in:(.+)$/) {
+    if ($A =~ /^-{1,2}in:(.+)$/) {
       # INPUT FILE LIST PATTERN
       printDebug('+ Found literal input pattern: "'.$1.'"');
       $OPTS{'input_pattern'} = "$1";
-    } elsif ($A =~ /^-ext:(lower|upper)$/) {
+    } elsif ($A =~ /^-{1,2}ext:(lower|upper)$/) {
       # FILE EXTENSION MODIFICATION
       $OPTS{'extension_modify'} = $1;
       $OPTS{'is_extension_modify'} = 1;
     } elsif ($A =~ /^-{0,2}help|[?]$/) {
       # HELP
       printUsage('');
-    } elsif ($A =~ /^-out:(.+)$/) {
+    } elsif ($A =~ /^-{1,2}out:(.+)$/) {
       # OUTPUT FILE NAME PATTERN
       $OPTS{'output_pattern'} = $1;
       printDebug("+ Found output pattern: \"${1}\"");
@@ -69,13 +69,13 @@ sub parseArgs () {
       } else {
         $OPTS{'is_numeric_output_pattern'} = 0;
       }
-    } elsif ($A =~ /^-start:(\d+)$/) {
+    } elsif ($A =~ /^-{1,2}start:(\d+)$/) {
       # START NUMBER
       $OPTS{'start_number'} = $1;
-    } elsif ($A =~ /^-debug$/) {
+    } elsif ($A =~ /^-{1,2}debug$/) {
       # DEBUG
       $OPTS{'debug'} = 1;
-    } elsif ($A =~ /^-[^.\d]+[:]?.*/){
+    } elsif ($A =~ /^-{1,2}[^.\d]+[:]?.*/){
       #FAILURE
       printUsage('Unrecognized argument: "'.$A.'".');
     } else {
@@ -141,51 +141,51 @@ sub printUsage {
 USAGE: '.$script_name.' <input_pattern> <options>
 
 OPTIONS:
-  -debug                 : Must be first option if you want to see debug info.
-  <input_pattern>        : Normal shell pattern. (only in *NIX / Mac terminal, Not for Windows CMD)
-  -in:"<input_pattern>"  : Explicit input pattern - use quotes.
-                           Patterns can be very explicit eg:
-                           To select files 000_* - 045_* use this: "0[0-3][0-9]_.* 04[0-5]_.*"
-  -out:<output_pattern>  : Use # (sequence number) to build an output pattern.
-                           Defaults to "#_" - will prefix files with: 1_, 2_, 3_, etc..
-                           Multiple "##" will force padding the number with zeros: 01_, 02_, 03_
-  -start:<start_number>  : Begin sequencing output file names from an arbitrary number. Defaults to "1".
-                           Can be combined with other options to just rename a particular set
-                           of files while keeping original order / numbering. See ADVANCED USAGE below.
-  -ext:<upper|lower>     : Make file extension upper or lower case.
-                           By default will not change file extension.
+  --debug                 : Must be first option if you want to see debug info.
+  <input_pattern>         : Normal shell pattern. (only in *NIX / Mac terminal, Not for Windows CMD)
+  --in:"<input_pattern>"  : Explicit input pattern - use quotes.
+                            Patterns can be very explicit eg:
+                            To select files 000_* - 045_* use this: "0[0-3][0-9]_.* 04[0-5]_.*"
+  --out:<output_pattern>  : Use # (sequence number) to build an output pattern.
+                            Defaults to "#_" - will prefix files with: 1_, 2_, 3_, etc..
+                            Multiple "##" will force padding the number with zeros: 01_, 02_, 03_
+  --start:<start_number>  : Begin sequencing output file names from an arbitrary number. Defaults to "1".
+                            Can be combined with other options to just rename a particular set
+                            of files while keeping original order / numbering. See ADVANCED USAGE below.
+  --ext:<upper|lower>     : Make file extension upper or lower case.
+                            By default will not change file extension.
 
 EXAMPLES:
-  '.$script_name.' *.*                         : Rename all files, prefix sequentially.
-  '.$script_name.' -in:"*.jpg" -out:#_PIC      : 1_PIC.jpg, 2_PIC.jpg, 3_PIC.jpg ...
-  '.$script_name.' *.JpG -ext:lower -start:3   : 3_.jpg, 4_.jpg, 5_.jpg ...
-  '.$script_name.' *.jpg -out:"### Bob"        : "001 Bob.jpg", "002 Bob.jpg", "003 Bob.jpg" ...
-  '.$script_name.' *.jpg -out:Foo_#            : Foo_1.jpg, Foo_2.jpg, F00_3.jpg ...
+  '.$script_name.' *.*                           : Rename all files, prefix sequentially.
+  '.$script_name.' --in:"*.jpg" --out:#_PIC      : 1_PIC.jpg, 2_PIC.jpg, 3_PIC.jpg ...
+  '.$script_name.' *.JpG --ext:lower --start:3   : 3_.jpg, 4_.jpg, 5_.jpg ...
+  '.$script_name.' *.jpg --out:"### Bob "        : "001 Bob.jpg", "002 Bob.jpg", "003 Bob.jpg" ...
+  '.$script_name.' *.jpg --out:Foo_#             : Foo_1.jpg, Foo_2.jpg, F00_3.jpg ...
 
 ADVANCED USAGE:
 1. Select just a few files and number / rename only those:
    Given 11 files: 01.txt, 02.txt, 03.txt, 04.txt, 05.txt, 06.txt, 07.txt, 08.txt, 09.txt, 10.txt, 11.txt.
    Rename files 6-11, adding the word Nice like so: "03_Nice", etc, but keep in same order:
-     '.$script_name.' -in:"0[6-9]* 1[01]*" -out:"#_Nice" -start:6
+     '.$script_name.' --in:"0[6-9]* 1[01]*" --out:"#_Nice" --start:6
    Result: 06_Nice.txt, 07_Nice.txt, 08_Nice.txt, 09_Nice.txt, 10_Nice.txt, 11_Nice.txt
    Other files are unchanged.
 
 2. Script will recognize files that have same name, but different extension and keep them grouped.
    This is common with photography where you may have both jpg and raw versions of a photo.
    Given these files: 1.jpg, 1.raw, 2.jpg, 3.jpg, 3.raw
-     '.$script_name.' -in:"*.jpg *.orf" -out:"Pic_#"
+     '.$script_name.' --in:"*.jpg *.orf" --out:"Pic_#"
    Result: Pic_1.jpg, Pic_1.raw, Pic_2.jpg, Pic_3.jpg, Pic_3.raw
 
 TIPS:
-1. The -start parameter only applies to the resulting file names, not the input names.
+1. The --start parameter only applies to the resulting file names, not the input names.
    The input file names are completely controlled by the input pattern so this may lead to unexpected behavior:
    Given these files: 1.jpg, 2.jpg, 3.jpg
-     '.$script_name.' -in:"*.jpg" -out:"#" -start:4
+     '.$script_name.' --in:"*.jpg" --out:"#" --start:4
    Result: 4.jpg, 5.jpg, 6.jpg
 
    Also note that the file order is always alphabetical, so:
    Given these files: 8.jpg, 9.jpg, 10.jpg
-     '.$script_name.' -in:"*.jpg" -out:"#"
+     '.$script_name.' --in:"*.jpg" --out:"#"
    The numbering will be messed up:
      10.jpg will be renamed to 1.jpg
       8.jpg will be renamed to 2.jpg
@@ -199,7 +199,7 @@ TIPS:
 
 3. All files are renamed according to the output pattern, therefore EXISTING FILE NAMES WILL BE DESTROYED.
    Given these files: dog.jpg, man.jpg, pizza.jpg
-     '.$script_name.' -in:"*.jpg" -out:"#-Ouch"
+     '.$script_name.' --in:"*.jpg" --out:"#-Ouch"
    Result: 1-Ouch.jpg, 2-Ouch.jpg, 3-Ouch.jpg
 
    This is why you should rename / number all files with j-renamer BEFORE you start adding individual names one at a time.
