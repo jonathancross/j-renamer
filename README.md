@@ -2,7 +2,7 @@
 Batch file renaming utility.
 
 J-Renamer is written in standard Perl with no additional modules / packages required.
-It should just "work" on Mac and Linux/Unix systems and probably Cygwin.
+It should "just work" on Mac and Linux/Unix systems and probably Cygwin.
 
 See `j-renamer.pl --help` from commandline for usage, examples and tips.
 
@@ -46,7 +46,7 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
    Result: 06_Nice.txt, 07_Nice.txt, 08_Nice.txt, 09_Nice.txt, 10_Nice.txt, 11_Nice.txt
 
    Other files are unchanged.
- 
+
 2. Script will recognize files that have same name, but different extension and keep them grouped.<br>
    This is common with photography where you may have both jpg and raw versions of a photo.
 
@@ -86,7 +86,7 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
         10.jpg will be renamed to 3.jpg
 
 2.  There is no `-end` parameter, the script just sequentially renames all files identified by the `-in` pattern.
-    
+
 3. All files are renamed according to the output pattern, therefore **existing file names will be destroyed**.
 
    Given these files: dog.jpg, man.jpg, pizza.jpg
