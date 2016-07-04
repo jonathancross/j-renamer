@@ -2,7 +2,7 @@
 Batch file renaming utility.
 
 J-Renamer is written in standard Perl with no additional modules / packages required.
-It should just "work" on Mac and Linux/Unix systems and probably Cygwin.
+It should "just work" on Mac and Linux/Unix systems and probably Cygwin.
 
 See `j-renamer.pl --help` from commandline for usage, examples and tips.
 
