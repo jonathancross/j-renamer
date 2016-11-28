@@ -8,12 +8,15 @@
 # See j-renamer.pl --help for more info, examples and usage.
 #
 # TODO:
-#  • Add support for date.
+#  • Add support for date: http://stackoverflow.com/questions/509576/how-do-i-get-a-files-last-modified-time-in-perl
 #  • Add option to keep existing file names.
 #
 # Jonathan Cross https://jonathancross.com
 #
 use strict;
+use File::stat;
+use Time::Piece;
+
 my %renameList;
 my @dirList;
 my $tmp = '.tmp.';
@@ -52,9 +55,9 @@ my %STATE = (
 exit;
 
 ################################################################################
+# Parses commandline arguments and overrides defaults in %OPTS.
+# TODO: Pass in @ARGV
 #   parseArgs()
-#   Parses commandline arguments and overrides defaults in %OPTS.
-#   TODO: Pass in @ARGV
 sub parseArgs {
   my $i = 0;
   for my $arg (@ARGV) {
@@ -120,7 +123,7 @@ sub parseArgs {
   @dirList = sort(@dirList);
   if ($OPTS{'debug'}) {
     printDebug("DIRLIST:");
-    for (my $k = 0;$k<@dirList;$k++) {
+    for (my $k = 0; $k < @dirList; $k++) {
       printDebug("   - dirList[$k] = $dirList[$k]");
     }
     printDebug("OPTIONS:");
@@ -144,8 +147,8 @@ sub parseArgs {
 }
 
 ################################################################################
+# Prints $message if debug mode is enabled.
 #   printDebug($message)
-#   Prints $message if debug mode is enabled.
 sub printDebug {
   if ($OPTS{'debug'}) {
     print "+ DEBUG: ".$_[0]."\n";
@@ -153,15 +156,15 @@ sub printDebug {
 }
 
 ################################################################################
+# Prints information on how to use this script and an optional $error.
 #   printUsage($error)
-#   Prints information on how to use this script and an optional $error.
 sub printUsage {
-    print "J Renamer\n";
+  print "J Renamer\n";
 
-    if ("$_[0]") {
-      print "\nERROR: $_[0]\n";
-    }
-    print '
+  if ("$_[0]") {
+    print "\nERROR: $_[0]\n";
+  }
+  print '
 
 USAGE: '.$script_name.' <input_pattern> <options>
 
@@ -257,10 +260,36 @@ SUPPORT:
 }
 
 ################################################################################
+# Returns last modified date of $file_name eg 2016-12-30.
+#   getFileDate($file_name)
+sub getFileDate {
+  my ($file_name) = @_;
+  open my $fh, '<', "$file_name" or die "$0: open: $!";
+  my $file_date = localtime(stat($fh) -> mtime) -> strftime("%Y-%m-%d");
+  close $fh or warn "$0: close: $!";
+  return $file_date;
+}
+
+################################################################################
+# Returns a formatted $fileExtension as uppercase or lowercase or leave as-is.
+#   formatFileExtension($fileExtension)
+sub formatFileExtension {
+  my ($fileExtension) = @_;
+  if ($OPTS{'is_extension_modify'}) {
+    if ($OPTS{'extension_modify'} eq 'lower') {
+      $fileExtension = lc($fileExtension);
+    } elsif ($OPTS{'extension_modify'} eq 'upper') {
+      $fileExtension = uc($fileExtension);
+    }
+  }
+  return $fileExtension;
+}
+
+################################################################################
+# Fills %renameList such that $renameList{$oldFile} = $newFile
+# Will also set $STATE{'is_name_collision'} if needed.
+# TODO: local vars
 #   createRenameList()
-#   Fills %renameList such that $renameList{$oldFile} = $newFile
-#   Will also set $STATE{'is_name_collision'} if needed.
-#   TODO: local vars
 sub createRenameList {
   my $curNumber = ($OPTS{'start_number'} - 1); # Hmmm... better way to do this?
   my $curNumberPadded = $OPTS{'start_number'};
@@ -307,19 +336,17 @@ sub createRenameList {
 }
 
 ################################################################################
+# Returns final $outputFileName given an $inputFileName.
 #   getOutputFileName($inputFileName, $curNumberPadded, $fileExtension)
-#   Given an inputFileName, returns the outputFileName.
-#   @returns $outputFileName
 sub getOutputFileName {
   my ($inputFileName, $curNumberPadded, $fileExtension) = @_;
-  my $outputFileName;
-  if ( $OPTS{'is_extension_modify'} ) {
-    if ($OPTS{'extension_modify'} eq 'lower') {
-      $fileExtension = lc($fileExtension);
-    } elsif ($OPTS{'extension_modify'} eq 'upper') {
-      $fileExtension = uc($fileExtension);
-    }
-  }
+  my ($outputFileName, $file_date);
+
+  $fileExtension = formatFileExtension($fileExtension);
+
+  $file_date = getFileDate($inputFileName);
+  printDebug("  - Lastmod of $inputFileName: '${file_date}'");
+
   if ($OPTS{'is_numeric_output_pattern'}) {
     $outputFileName = "$OPTS{'output_pattern_prefix'}${curNumberPadded}$OPTS{'output_pattern_suffix'}${fileExtension}";
   } else {
@@ -329,8 +356,8 @@ sub getOutputFileName {
 }
 
 ################################################################################
+# Manages preview and renaming of the whole list of files and prompting user.
 #   manageFiles()
-#   Manages preview and renaming of the whole list of files and prompting user.
 sub manageFiles {
   my $doRename = '';
   if ($STATE{'rename_list_size'} == 0) {
@@ -356,9 +383,9 @@ sub manageFiles {
 }
 
 ################################################################################
+# Handles outer rename loop and debug info.
+# $fileOpperation must be one of (preview|rename|collision_handeling)
 #   processFileList($fileOpperation)
-#   $fileOpperation must be one of (preview|rename|collision_handeling)
-#   Handles outer rename loop and debug info.
 sub processFileList {
   my $fileOpperation = $_[0];
   # TODO: Ensure $fileOpperation =~ m:^(preview|rename|collision_handeling)$:
@@ -375,8 +402,8 @@ sub processFileList {
 }
 
 ################################################################################
+# Handles rename and / or preview of a single file.
 #   processFile($inputFileName, $outputFileName, $fileOpperation)
-#   Handles rename and / or preview of a single file.
 sub processFile {
   my ($inputFileName, $outputFileName, $fileOpperation) = @_;
 
@@ -406,9 +433,8 @@ sub processFile {
 }
 
 ################################################################################
+# Returns $curNumber padded with zeros as needed up to $digitsMax
 #   getPaddedNumber($curNumber, $digitsMax)
-#   Given a number $curNumber, will pad as needed up to $digitsMax
-#   @returns padded number.
 sub getPaddedNumber {
   my ($curNumber, $digitsMax) = @_;
   my $currentLen = length($curNumber);
@@ -420,9 +446,9 @@ sub getPaddedNumber {
 }
 
 ################################################################################
+# Prompts user for input and supports an optional default $defaultValue.
+# Returns the value selected by user or default.
 #   prompt($promptString, $defaultValue)
-#   Prompts user for input and supports an optional default $defaultValue.
-#   @returns the value selected by user or default.
 sub prompt {
    my($promptString, $defaultValue) = @_;
    if ($defaultValue) {
