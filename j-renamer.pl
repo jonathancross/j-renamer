@@ -29,22 +29,23 @@ if ($script_name =~ m:([^/]*)$:) {
 
 # Program options and defaults:
 my %OPTS = (
-  input_pattern         => '',
-  output_pattern        => '#_',
-  output_pattern_prefix => '',
-  output_pattern_suffix => '',
-  output_pattern_digits => 1,
+  debug                     => 0,
+  extension_modify          => '',
+  input_pattern             => '',
+  is_extension_modify       => 0,
   is_numeric_output_pattern => 1,
-  start_number          => 1,
-  extension_modify      => '',
-  is_extension_modify   => 0,
-  debug                 => 0,
+  is_use_file_date          => 0,
+  output_pattern            => '#_',
+  output_pattern_digits     => 1,
+  output_pattern_prefix     => '',
+  output_pattern_suffix     => '',
+  start_number              => 1
 );
 
 # Global state properties:
 my %STATE = (
-  rename_list_size    => 0,
   is_name_collision   => 0,
+  rename_list_size    => 0
 );
 
 # START PROCESSING
@@ -61,17 +62,19 @@ exit;
 sub parseArgs {
   my $i = 0;
   for my $arg (@ARGV) {
-    if ($arg =~ /^-{1,2}in:(.+)$/) {
-      # Input file list pattern
-      printDebug('+ Found literal input pattern: "'.$1.'"');
-      $OPTS{'input_pattern'} = "$1";
+    if ($arg =~ /^-{1,2}debug$/) {
+      # Debug
+      $OPTS{'debug'} = 1;
+    } elsif ($arg =~ /^-{0,2}help|[?]$/) {
+      # Help
+      printUsage('');
+    } elsif ($arg =~ /^-{0,2}use_file_date$/) {
+      $OPTS{'is_use_file_date'} = 1;
+      printDebug("+ Using file dates as their prefix.");
     } elsif ($arg =~ /^-{1,2}ext:(lower|upper)$/) {
       # File extension modification
       $OPTS{'extension_modify'} = $1;
       $OPTS{'is_extension_modify'} = 1;
-    } elsif ($arg =~ /^-{0,2}help|[?]$/) {
-      # Help
-      printUsage('');
     } elsif ($arg =~ /^-{1,2}out:(.+)$/) {
       # Output file name pattern
       $OPTS{'output_pattern'} = $1;
@@ -82,7 +85,11 @@ sub parseArgs {
       }
       # Cache non-numeric parts of the pattern:
       if ($OPTS{'output_pattern'} =~ /([^#]*)(#+)([^#]*)/) {
-        ($OPTS{'output_pattern_prefix'}, $OPTS{'output_pattern_digits'}, $OPTS{'output_pattern_suffix'}) = ($1, length($2), $3);
+        (
+          $OPTS{'output_pattern_prefix'},
+          $OPTS{'output_pattern_digits'},
+          $OPTS{'output_pattern_suffix'}
+        ) = ($1, length($2), $3);
         $OPTS{'is_numeric_output_pattern'} = 1;
       } else {
         $OPTS{'is_numeric_output_pattern'} = 0;
@@ -90,9 +97,10 @@ sub parseArgs {
     } elsif ($arg =~ /^-{1,2}start:(\d+)$/) {
       # Number to start counting from
       $OPTS{'start_number'} = $1;
-    } elsif ($arg =~ /^-{1,2}debug$/) {
-      # Debug
-      $OPTS{'debug'} = 1;
+    } elsif ($arg =~ /^-{1,2}in:(.+)$/) {
+      # Input file list pattern
+      printDebug('+ Found literal input pattern: "'.$1.'"');
+      $OPTS{'input_pattern'} = "$1";
     } elsif ($arg =~ /^-{1,2}[^.\d]+[:]?.*/) {
       # Failure
       printUsage('Unrecognized argument: "'.$arg.'".');
@@ -260,13 +268,17 @@ SUPPORT:
 }
 
 ################################################################################
-# Returns last modified date of $file_name eg 2016-12-30.
+# Returns last modified date of $file_name eg 2016-12-30 or an empty string.
 #   getFileDate($file_name)
 sub getFileDate {
   my ($file_name) = @_;
-  open my $fh, '<', "$file_name" or die "$0: open: $!";
-  my $file_date = localtime(stat($fh) -> mtime) -> strftime("%Y-%m-%d");
-  close $fh or warn "$0: close: $!";
+  my $file_date = '';
+  if ($OPTS{'is_use_file_date'}) {
+    open my $fh, '<', "$file_name" or die "$0: open: $!";
+    $file_date = localtime(stat($fh) -> mtime) -> strftime("%Y-%m-%d");
+    printDebug("  - Lastmod of $file_name: '${file_date}'");
+    close $fh or warn "$0: close: $!";
+  }
   return $file_date;
 }
 
@@ -343,14 +355,13 @@ sub getOutputFileName {
   my ($outputFileName, $file_date);
 
   $fileExtension = formatFileExtension($fileExtension);
-
   $file_date = getFileDate($inputFileName);
-  printDebug("  - Lastmod of $inputFileName: '${file_date}'");
 
   if ($OPTS{'is_numeric_output_pattern'}) {
-    $outputFileName = "$OPTS{'output_pattern_prefix'}${curNumberPadded}$OPTS{'output_pattern_suffix'}${fileExtension}";
+    $outputFileName = "${file_date}$OPTS{'output_pattern_prefix'}${curNumberPadded}$OPTS{'output_pattern_suffix'}${fileExtension}";
   } else {
-    $outputFileName = "${curNumberPadded}_".$OPTS{'output_pattern'}."${fileExtension}";
+    # Confirm if we want to hard-code the underscore separators below:
+    $outputFileName = "${file_date}_${curNumberPadded}_$OPTS{'output_pattern'}${fileExtension}";
   }
   return $outputFileName;
 }
@@ -409,7 +420,7 @@ sub processFile {
 
   if ($fileOpperation eq 'rename') {
     if ($STATE{'is_name_collision'}) {
-      #use buffered file
+      # Prefix file to avoid clobbering
       $inputFileName = $tmp.$outputFileName;
     }
     print "\n  Renaming : ${inputFileName}\t=>\t${outputFileName}";
@@ -417,10 +428,9 @@ sub processFile {
       print ' [ERROR FILE ALREADY EXISTS]'
     } elsif ( ! rename($inputFileName, $outputFileName)) {
       print ' [ERROR]';
-      #exit 1;
     }
   } elsif ($fileOpperation eq 'collision_handeling') {
-    #prefix
+    # Prefix file to avoid clobbering
     $outputFileName = $tmp.$outputFileName;
     if (! -f $outputFileName) {
       rename($inputFileName, $outputFileName);
@@ -440,7 +450,6 @@ sub getPaddedNumber {
   my $currentLen = length($curNumber);
   for (my $d = $digitsMax - $currentLen; $d > 0; $d--) {
     $curNumber = "0".$curNumber;
-    #print "  Padding: 0$curNumber\n";
   }
   return $curNumber;
 }
