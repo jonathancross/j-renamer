@@ -1,4 +1,4 @@
-#!/opt/local/bin/perl -w
+#!/opt/local/bin/perl
 #
 # J-Renamer
 # Batch file renaming utility.
@@ -16,6 +16,7 @@
 use strict;
 use File::stat;
 use Time::Piece;
+use warnings;
 
 my %renameList;
 my @dirList;

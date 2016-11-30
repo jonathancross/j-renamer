@@ -1,9 +1,10 @@
-#!/opt/local/bin/perl -w
+#!/opt/local/bin/perl
 #
 # Unit tests for j-renamer.pl
 # Should be run as ./test.pl
 #
 use strict;
+use warnings;
 
 my $script_name = "../../j-renamer.pl"; # Path from test_data/ subdir.
 my $test_data = "test_data/";
