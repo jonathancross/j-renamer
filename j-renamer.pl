@@ -8,7 +8,7 @@
 # See j-renamer.pl --help for more info, examples and usage.
 #
 # TODO:
-#  • Add support for date: http://stackoverflow.com/questions/509576/how-do-i-get-a-files-last-modified-time-in-perl
+#  • Test --use_file_date support and document here + website.
 #  • Add option to keep existing file names.
 #
 # Jonathan Cross https://jonathancross.com
@@ -307,39 +307,45 @@ sub createRenameList {
   my $curNumber = ($OPTS{'start_number'} - 1); # Hmmm... better way to do this?
   my $curNumberPadded = $OPTS{'start_number'};
 
-  # Used to prevent double-counting of files which are identical, except for their extension.
+  # Prevent double-counting of files which are identical, except for extension.
   my $uniqueFileNames = 0;
 
   # Used to handle files with different extensions, but same name
   my $prevFilePrefix = '';
-  # Make sure that $uniqueFileNameDigits doesn't double-count files with same name and different extensions.
+
+  # Make sure that $paddingDigits doesn't double-count files with same name
+  # but different extensions.
   foreach my $curFileName (@dirList) {
     my ($curFilePrefix, $curFileExtension) = ($curFileName =~ /(.*)([.][^.]+)$/);
-    # This allows us to keep grouping of files with same name, but different extensions
+    # Keep grouping of files with same name, but different extensions:
     if ( ! ($curFilePrefix eq $prevFilePrefix)) {
       $uniqueFileNames++;
     }
     $prevFilePrefix = $curFilePrefix;
   }
 
-  # Digits in the number of unique file names.  We have to add start number:
-  my $uniqueFileNameDigits = length(int($uniqueFileNames) + $curNumber);
+  # Digits in the number of unique file names (125 files == 3 digits).
+  # Used below for padding.
+  my $paddingDigits = length(int($uniqueFileNames) + $curNumber);
 
-  # Padding override... user can pad more than is necessary via multiple hash symbols.
-  if ($OPTS{'output_pattern_digits'} gt $uniqueFileNameDigits) {
-    printDebug("+Overriding padding from: ${uniqueFileNameDigits} to $OPTS{'output_pattern_digits'} due to pattern.");
-    $uniqueFileNameDigits = $OPTS{'output_pattern_digits'};
+  # Padding override... user can pad more than is necessary via #### symbols.
+  if ($OPTS{'output_pattern_digits'} gt $paddingDigits) {
+    printDebug("+Overriding padding from: ${paddingDigits} to ".
+               "$OPTS{'output_pattern_digits'} due to pattern.");
+    $paddingDigits = $OPTS{'output_pattern_digits'};
   }
 
   my $outputFileName;
   foreach my $curFileName (@dirList) {
     my ($curFilePrefix, $curFileExtension) = ($curFileName =~ /(.*)([.][^.]+)$/);
-    # This allows us to keep grouping of files with same name, but different extensions.
+    # Keep grouping of files with same name, but different extensions:
     if ( ! ($curFilePrefix eq $prevFilePrefix)) {
       $curNumber++;
     }
-    $curNumberPadded = getPaddedNumber($curNumber, $uniqueFileNameDigits);
-    $outputFileName = getOutputFileName($curFileName, $curNumberPadded, $curFileExtension);
+    $curNumberPadded = getPaddedNumber($curNumber, $paddingDigits);
+    $outputFileName = getOutputFileName($curFileName,
+                                        $curNumberPadded,
+                                        $curFileExtension);
     if ($STATE{'is_name_collision'} ne 1 && -f $outputFileName) {
       printDebug("name_collision: $outputFileName");
       $STATE{'is_name_collision'} = 1;
@@ -360,7 +366,11 @@ sub getOutputFileName {
   $file_date = getFileDate($inputFileName);
 
   if ($OPTS{'is_numeric_output_pattern'}) {
-    $outputFileName = "${file_date}$OPTS{'output_pattern_prefix'}${curNumberPadded}$OPTS{'output_pattern_suffix'}${fileExtension}";
+    $outputFileName = "${file_date}".
+                      "$OPTS{'output_pattern_prefix'}".
+                      "${curNumberPadded}".
+                      "$OPTS{'output_pattern_suffix'}".
+                      "${fileExtension}";
   } else {
     # Confirm if we want to hard-code the underscore separators below:
     $outputFileName = "${file_date}_${curNumberPadded}_$OPTS{'output_pattern'}${fileExtension}";
@@ -445,12 +455,12 @@ sub processFile {
 }
 
 ################################################################################
-# Returns $curNumber padded with zeros as needed up to $digitsMax
-#   getPaddedNumber($curNumber, $digitsMax)
+# Returns $curNumber padded with zeros as needed up to $paddingDigits
+#   getPaddedNumber($curNumber, $paddingDigits)
 sub getPaddedNumber {
-  my ($curNumber, $digitsMax) = @_;
+  my ($curNumber, $paddingDigits) = @_;
   my $currentLen = length($curNumber);
-  for (my $d = $digitsMax - $currentLen; $d > 0; $d--) {
+  for (my $d = $paddingDigits - $currentLen; $d > 0; $d--) {
     $curNumber = "0".$curNumber;
   }
   return $curNumber;
