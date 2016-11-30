@@ -300,7 +300,7 @@ sub formatFileExtension {
 ################################################################################
 # Fills %renameList such that $renameList{$oldFile} = $newFile
 # Will also set $STATE{'is_name_collision'} if needed.
-# TODO: local vars
+
 #   createRenameList()
 sub createRenameList {
   my $curNumber = ($OPTS{'start_number'} - 1); # Hmmm... better way to do this?
@@ -320,8 +320,9 @@ sub createRenameList {
     }
     $prevFilePrefix = $curFilePrefix;
   }
-  # Digits in the number of unique file names.
-  my $uniqueFileNameDigits = length(int($uniqueFileNames));
+
+  # Digits in the number of unique file names.  We have to add start number:
+  my $uniqueFileNameDigits = length(int($uniqueFileNames) + $curNumber);
 
   # Padding override... user can pad more than is necessary via multiple hash symbols.
   if ($OPTS{'output_pattern_digits'} gt $uniqueFileNameDigits) {
