@@ -1,10 +1,9 @@
 language: "perl"
-perl:
-  - "5.22"
-  - "5.12"
 
 branches:
   only:
     - master
+
+install: true
 
 script: "cd test && perl test.pl"
