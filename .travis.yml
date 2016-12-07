@@ -1,0 +1,10 @@
+language: "perl"
+perl:
+  - "5.22"
+  - "5.12"
+
+branches:
+  only:
+    - master
+
+script: "cd test && perl test.pl"
