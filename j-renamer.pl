@@ -8,14 +8,16 @@
 # See j-renamer.pl --help for more info, examples and usage.
 #
 # TODO:
-#  • Test --use_file_date support and document here + website.
+#  • Test --time_zone and document on website.
+#     - Ideally would be part of pattern eg: %F (as in the date command)
 #  • Add option to keep existing file names.
 #
 # Jonathan Cross https://jonathancross.com
 #
 use strict;
 use File::stat;
-use Time::Piece;
+use DateTime; # Used to parse file date with correct timezone.
+use Image::ExifTool; # Used to retrieve exif file date.
 use warnings;
 
 my %renameList;
@@ -45,8 +47,13 @@ my %OPTS = (
 
 # Global state properties:
 my %STATE = (
-  is_name_collision   => 0,
-  rename_list_size    => 0
+  is_name_collision         => 0,
+  rename_list_size          => 0,
+  time_zone                 => ''
+);
+
+my %CONST = (
+  tz_link => 'https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List'
 );
 
 # START PROCESSING
@@ -69,8 +76,20 @@ sub parseArgs {
     } elsif ($arg =~ /^-{0,2}help|[?]$/) {
       # Help
       printUsage('');
-    } elsif ($arg =~ /^-{0,2}use_file_date$/) {
+    } elsif ($arg =~ /^-{0,2}time_zone:?(.*)$/) {
+      # Configure time_zone used for dates.
+      # TODO: This should actually be triggered by %F in the pattern.
+      if ($1 =~ m:^([A-z/_-]{3,30})$:) {
+         $STATE{'time_zone'} = $1;
+         printDebug("+ time_zone is good: $1");
+      } else {
+         printDebug("+ time_zone is bad: $1");
+         printUsage("The time_zone: '$1' doesn't look right.
+         Please use a time zone from here:
+         $CONST{'tz_link'}");
+      }
       $OPTS{'is_use_file_date'} = 1;
+      $OPTS{'file_date_format'} = '%F'; # TODO: Remove hard-coded
       printDebug("+ Using file dates as their prefix.");
     } elsif ($arg =~ /^-{1,2}ext:(lower|upper)$/) {
       # File extension modification
@@ -197,6 +216,14 @@ OPTIONS:
   --ext:<upper|lower> : Make file extension upper or lower case.
                         By default will not change file extension.
 
+  --time_zone:TZ      : Provide a time zone used to calculate the creation /
+                        modification time of the file.  Time Zone TZ can be
+                        "local" or any location listed here:
+                        '.$CONST{'tz_link'}.'
+                        If exif date is found in an image, TZ will be ignored.
+                        The date is ALWAYS prefixed to the output pattern.
+                        NOTE: THIS IS EXPERIMENTAL AND WILL PROBABLY CHANGE.
+
 EXAMPLES:
   '.$script_name.' *.*                     : Prefix all files sequentially.
   '.$script_name.' --in:"*.jpg" --out:#_Me : 1_Me.jpg, 2_Me.jpg, 3_Me.jpg ...
@@ -204,6 +231,7 @@ EXAMPLES:
   '.$script_name.' *.jpg --start:3         : 3_.jpg, 4_.jpg, 5_.jpg ...
   '.$script_name.' *.c --out:"## X"        : "01 X.c", "02 X.c", "03 X.c" ...
   '.$script_name.' *.jpg --out:Foo_#       : Foo_1.jpg, Foo_2.jpg, F00_3.jpg ...
+  '.$script_name.' X.jpg --time_zone:America/Boise --out:_#_X: 2016-01-22_0_X.jpg ...
 
 ADVANCED USAGE:
 1. Select just a few files and number / rename only those:
@@ -269,15 +297,78 @@ SUPPORT:
 }
 
 ################################################################################
+# Returns a DateTime::TimeZone object or dies gracefully if impossible.
+#   getTimeZoneObj($time_zone)
+sub getTimeZoneObj {
+  my ($time_zone) = @_;
+  if (DateTime::TimeZone->is_valid_name($time_zone)) {
+    return DateTime::TimeZone->new(name => $time_zone);
+  } else {
+    printUsage("Unrecognized TimeZone '$time_zone'.
+    Please choose one from this list:
+    $CONST{'tz_link'}");
+  }
+}
+
+################################################################################
+# Returns a formatted date string from exif file info if it is available.
+#   getExifFileDate($fh)
+sub getExifFileDate {
+  my ($fh) = @_;
+  my $file_date = '';
+  my $exifTool = new Image::ExifTool;
+  $exifTool->Options(Group0 => ['EXIF'], DateFormat => $OPTS{'file_date_format'});
+  if ($exifTool->ExtractInfo($fh)) {
+    $file_date = ($exifTool->GetInfo('CreateDate'))->{'CreateDate'};
+  }
+  return $file_date;
+}
+
+################################################################################
+# Returns a formatted date string from file system lastmod.
+#   getFileLastmod($fh)
+sub getFileLastmod {
+  my ($fh) = @_;
+  my $dt = DateTime->from_epoch(epoch => stat($fh)->mtime,
+                                time_zone => getTimeZoneObj($STATE{'time_zone'}));
+  return $dt->strftime($OPTS{'file_date_format'});
+}
+
+################################################################################
 # Returns last modified date of $file_name eg 2016-12-30 or an empty string.
 #   getFileDate($file_name)
 sub getFileDate {
   my ($file_name) = @_;
   my $file_date = '';
+
   if ($OPTS{'is_use_file_date'}) {
+
+    # Manually Specify timezone pictures were taken in.
+    # $ENV{TZ} = 'CST8CDT'; # CST8CDT
+    # Time::Piece::_tzset();
+    # $file_date = localtime(stat($fh) -> mtime) -> strftime("%Y-%m-%d");
+
     open my $fh, '<', "$file_name" or die "$0: open: $!";
-    $file_date = localtime(stat($fh) -> mtime) -> strftime("%Y-%m-%d");
-    printDebug("  - Lastmod of $file_name: '${file_date}'");
+    printDebug(" ${file_name}:");
+
+    $file_date = getExifFileDate($fh);
+    if ($file_date) {
+      printDebug(" - exif date found: $file_date");
+    } else {
+      # Tell the user if they need to specify a time zone to use file date.
+      if ($STATE{'time_zone'}) {
+        $file_date = getFileLastmod($fh);
+        printDebug(" - fallback file date: $file_date");
+      } else {
+        # This branch is impossible to reach currently because you cannot use a
+        # date unless you provide a timezone. This will change once we have
+        # %F pattern.
+        printDebug(" - need timezone to determine fallback date.");
+        # TODO: Explain how to set timezone.
+        printUsage("File '${file_name}' does not contain an exif creation date.  This is usually only available for images from digital cameras.  You must therefore tell us what timezone to use when determining the file dates.");
+      }
+    }
+
     close $fh or warn "$0: close: $!";
   }
   return $file_date;
