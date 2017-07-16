@@ -33,6 +33,7 @@ if ($script_name =~ m:([^/]*)$:) {
 # Program options and defaults:
 my %OPTS = (
   debug                     => 0,
+  dry_run                   => 0,
   extension_modify          => '',
   input_pattern             => '',
   is_extension_modify       => 0,
@@ -76,6 +77,9 @@ sub parseArgs {
     } elsif ($arg =~ /^-{0,2}help|[?]$/) {
       # Help
       printUsage('');
+    } elsif ($arg =~ /^-{0,2}dry-run$/) {
+      # Dry run (used for testing)
+      $OPTS{'dry_run'} = 1;
     } elsif ($arg =~ /^-{0,2}time_zone:?(.*)$/) {
       # Configure time_zone used for dates.
       # TODO: This should actually be triggered by %F in the pattern.
@@ -199,6 +203,7 @@ USAGE: '.$script_name.' <input_pattern> <options>
 OPTIONS:
   --debug             : Must be first option if you want to see debug info.
   <input_pattern>     : Shell input pattern. (only *NIX / Mac, Not Windows)
+  --dry-run           : Show what would be renamed without doing actual rename.
   --in:"<pattern>"    : Explicit input pattern - use quotes.
                         Advanced globing patterns are supported:
                         Eg: To select files 000_* - 045_* use this pattern:
@@ -478,6 +483,14 @@ sub manageFiles {
     printUsage("No files to rename.");
   }
   processFileList('preview');
+
+  # return if this is just a dry-run
+  if ($OPTS{'dry_run'}) {
+    print "
+  + No files changed (dry-run).\n\n[ DONE ]\n";
+    return;
+  }
+
   until ($doRename =~ /^y|^n/) {
     $doRename = &prompt("\n\nRENAME ABOVE FILES? (y|n) ", "n");
   }
