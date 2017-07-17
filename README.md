@@ -1,10 +1,9 @@
 # J-Renamer
-Batch file renaming utility.
-
-J-Renamer is written in standard Perl with no additional modules / packages required.
-It should "just work" on Mac and Linux/Unix systems and probably Cygwin.
+Batch file renaming utility written in Perl.
 
 See `j-renamer.pl --help` from commandline for usage, examples and tips.
+
+[![Build Status](https://travis-ci.org/jonathancross/j-renamer.svg?branch=master)](https://travis-ci.org/jonathancross/j-renamer)
 
 
 ### Usage
@@ -14,6 +13,7 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
 ### Options:
     --debug             : Must be first option if you want to see debug info.
     <input_pattern>     : Shell input pattern. (only *NIX / Mac, Not Windows)
+    --dry-run           : Show what would be renamed without doing actual rename.
     --in:"<pattern>"    : Explicit input pattern - use quotes.
                           Advanced globing patterns are supported:
                           Eg: To select files 000_* - 045_* use this pattern:
@@ -30,6 +30,13 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
                           and numbering. See ADVANCED USAGE below.
     --ext:<upper|lower> : Make file extension upper or lower case.
                           By default will not change file extension.
+    --time_zone:TZ      : Provide a time zone used to calculate the creation /
+                          modification time of the file.  Time Zone TZ can be
+                          "local" or any location listed here:
+                          https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+                          If exif date is found in an image, TZ will be ignored.
+                          The date is ALWAYS prefixed to the output pattern.
+                          NOTE: THIS IS EXPERIMENTAL AND WILL PROBABLY CHANGE.
 
 
 
@@ -40,6 +47,7 @@ See `j-renamer.pl --help` from commandline for usage, examples and tips.
     j-renamer.pl *.jpg --start:3         : 3_.jpg, 4_.jpg, 5_.jpg ...
     j-renamer.pl *.c --out:"## X"        : "01 X.c", "02 X.c", "03 X.c" ...
     j-renamer.pl *.jpg --out:Foo_#       : Foo_1.jpg, Foo_2.jpg, F00_3.jpg ...
+    j-renamer.pl X.jpg --time_zone:America/Boise --out:_#_X: 2016-01-22_0_X.jpg ...
 
 
 ### Advanced usage:
