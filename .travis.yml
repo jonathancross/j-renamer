@@ -4,6 +4,9 @@ branches:
   only:
     - master
 
-install: true
+install:
+  - cpanm Image::ExifTool
 
-script: "cd test && perl test.pl"
+script:
+  - cd test
+  - perl test.pl
